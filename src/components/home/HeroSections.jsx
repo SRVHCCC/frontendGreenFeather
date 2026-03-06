@@ -1,86 +1,113 @@
-import React, { useState } from "react";
-// import axios from "axios"; // Commented out for static mode
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination, Navigation } from "swiper/modules";
+import { Autoplay , Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/navigation";
 import { Link } from "react-router-dom";
-// import API_URL from "../../config/config"; // Commented out
+import API_URL from "../../config/config";  
 import { motion } from "framer-motion";
 
-// --- STATIC DATA WITH YOUR LINKS ---
-const STATIC_BANNERS = [
-  {
-    _id: "1",
-    items: [
-      {
-        imageUrl: "https://image2url.com/r2/default/images/1772789146940-c5d9a8e8-cb44-432e-a834-c17f7f4b8eac.jpeg",
-        linkId: "category-1", 
-      },
-      {
-        imageUrl: "https://image2url.com/r2/default/images/1772789126156-ae25718e-7ae4-4bf2-ad49-7126ac77d5df.jpeg",
-        linkId: "category-2",
-      },
-      {
-        imageUrl: "https://image2url.com/r2/default/images/1772789073056-75642f1a-2fff-40af-80ec-91f79fb65e8b.jpeg",
-        linkId: "category-3",
-      }
-    ]
-  }
-];
+const HeroSections = ({ heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh] bg-[#FCF8F3]" }) => {
+  const [banners, setBanners] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-const HeroSections = ({ heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh]" }) => {
-  // Direct use of static data
-  const [banners] = useState(STATIC_BANNERS);
+  const fetchHeroData = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/hero/banner/get-hero`);
+      console.log("hero response:", res.data);
 
-  /* // DYNAMIC FETCHING DISABLED
+      const sliderSections = (res.data || []).filter(
+        (section) =>
+          section.isActive !== false &&
+          Array.isArray(section.items) &&
+          section.items.length > 0
+      );
+
+      console.log("filtered sections:", sliderSections);
+      setBanners(sliderSections);
+    } catch (err) {
+      console.error("Error fetching hero data", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchHeroData();
-  }, []); 
-  */
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="h-[60vh] flex items-center justify-center text-gray-500 font-medium">
+        Loading Banners...
+      </div>
+    );
+  }
 
   if (!banners.length) return null;
 
   return (
-    <div className="w-full">
+    <div className="w-full ">
       {banners.map((section) => (
-        <section key={section._id} className="w-full relative px-4 md:px-6">
+        <section key={section._id} className="w-full relative">
+
           <Swiper
             loop={section.items.length > 1}
-            modules={[Autoplay, Pagination, Navigation]}
+            modules={[Autoplay , Pagination]}
             pagination={{ clickable: true }}
             navigation={true}
             autoplay={{ delay: 4000, disableOnInteraction: false }}
-            speed={1000}
-            className={`w-full ${heightClass} rounded-2xl overflow-hidden shadow-lg`}
+            speed={900}
+            className={`w-full ${heightClass} rounded-2xl`}
           >
             {section.items.map((item, i) => (
               <SwiperSlide key={i}>
                 <Link
-                  to={`/products?category=${item.linkId}`}
+                  to={
+                    item.linkType === "category"
+                      ? `/products?category=${item.linkId}`
+                      : `/product/${item.linkId}`
+                  }
                   className="block w-full h-full"
                 >
-                  <div className="relative w-full h-full">
+                  <div className="relative w-full h-full overflow-hidden">
+
                     <motion.img
-                      initial={{ scale: 1.1 }}
+                      initial={{ scale: 1.08 }}
                       animate={{ scale: 1 }}
-                      transition={{ duration: 5, ease: "easeOut" }}
-                      src={item.imageUrl}
-                      alt={`Slide ${i + 1}`}
+                      transition={{ duration: 6 }}
+                      src={`${API_URL}/${String(item.imageUrl).replace(/^\//, "")}`}
+                      alt={section.sectionName}
                       className="w-full h-full object-cover"
                       onError={(e) => {
-                        e.target.src = "https://via.placeholder.com/1920x800?text=Banner+Image";
+                        e.target.src =
+                          "https://via.placeholder.com/1920x800?text=Image+Not+Found";
                       }}
                     />
-                    
-                    {/* Dark Overlay removed so images look clean, adding very subtle one if needed */}
-                    {/* <div className="absolute inset-0 bg-black/5" /> */}
+
+                    <div className="absolute inset-0 bg-black/30" />
+
+                    {item.title && (
+                      <div className="absolute inset-0 flex items-center justify-center text-center px-4">
+                        <motion.h2
+                          initial={{ y: 30, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ duration: 0.8 }}
+                          className="text-white text-2xl md:text-4xl lg:text-5xl font-bold drop-shadow-xl"
+                        >
+                          {item.title}
+                        </motion.h2>
+                      </div>
+                    )}
+
                   </div>
                 </Link>
               </SwiperSlide>
             ))}
           </Swiper>
+
         </section>
       ))}
     </div>
