@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay , Pagination } from "swiper/modules";
+import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
-import "swiper/css/navigation";
 import { Link } from "react-router-dom";
-import API_URL from "../../config/config";  
+import API_URL from "../../config/config";
 import { motion } from "framer-motion";
 
-const HeroSections = ({ heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh] bg-[#FCF8F3]" }) => {
+const HeroSections = ({
+  heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh] bg-[#FCF8F3]"
+}) => {
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -25,7 +26,6 @@ const HeroSections = ({ heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh] bg-[#FCF
           section.items.length > 0
       );
 
-      console.log("filtered sections:", sliderSections);
       setBanners(sliderSections);
     } catch (err) {
       console.error("Error fetching hero data", err);
@@ -38,6 +38,17 @@ const HeroSections = ({ heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh] bg-[#FCF
     fetchHeroData();
   }, []);
 
+  // ✅ image path fix
+  const getImageUrl = (url) => {
+    if (!url) return "";
+
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+
+    return `${API_URL}/${url.replace(/^\//, "")}`;
+  };
+
   if (loading) {
     return (
       <div className="h-[60vh] flex items-center justify-center text-gray-500 font-medium">
@@ -49,15 +60,13 @@ const HeroSections = ({ heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh] bg-[#FCF
   if (!banners.length) return null;
 
   return (
-    <div className="w-full ">
+    <div className="w-full">
       {banners.map((section) => (
         <section key={section._id} className="w-full relative">
-
           <Swiper
             loop={section.items.length > 1}
-            modules={[Autoplay , Pagination]}
+            modules={[Autoplay, Pagination]}
             pagination={{ clickable: true }}
-            navigation={true}
             autoplay={{ delay: 4000, disableOnInteraction: false }}
             speed={900}
             className={`w-full ${heightClass} rounded-2xl`}
@@ -78,7 +87,7 @@ const HeroSections = ({ heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh] bg-[#FCF
                       initial={{ scale: 1.08 }}
                       animate={{ scale: 1 }}
                       transition={{ duration: 6 }}
-                      src={`${API_URL}/${String(item.imageUrl).replace(/^\//, "")}`}
+                      src={getImageUrl(item.imageUrl)}
                       alt={section.sectionName}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -107,7 +116,6 @@ const HeroSections = ({ heightClass = "h-[55vh] md:h-[60vh] lg:h-[60vh] bg-[#FCF
               </SwiperSlide>
             ))}
           </Swiper>
-
         </section>
       ))}
     </div>
